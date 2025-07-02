@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:8000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -12,7 +12,7 @@ const apiClient = axios.create({
 export default {
   // Languages
   getLanguages() {
-    return apiClient.get('/languages/')
+    return apiClient.get('/languages/', { params: { limit: 100 } })
   },
 
   // Libraries
