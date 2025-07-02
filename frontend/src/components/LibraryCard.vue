@@ -6,11 +6,6 @@
     </div>
     
     <div class="card-body">
-      <div class="library-language mb-2">
-        <span class="text-muted">Язык: </span>
-        <span class="badge">{{ library.language_name }}</span>
-      </div>
-      
       <div class="library-date mb-2">
         <span class="text-muted">Опубликовано: </span>
         <span>{{ formatDate(library.published_date) }}</span>

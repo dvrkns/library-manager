@@ -17,10 +17,7 @@ namespace LibraryManager.Models
         public string? Description { get; set; }
 
         [JsonProperty("language")]
-        public int LanguageId { get; set; }
-
-        [JsonProperty("language_name")]
-        public string? LanguageName { get; set; }
+        public int? LanguageId { get; set; }
 
         [JsonProperty("author")]
         public string? Author { get; set; }

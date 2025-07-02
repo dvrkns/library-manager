@@ -316,7 +316,6 @@ namespace LibraryManager.Services
                     Version = "1.0.0",
                     Description = "Тестовый локальный пакет",
                     LanguageId = 1, // Python
-                    LanguageName = "Python",
                     PublishedDate = DateTime.Now
                 };
                 

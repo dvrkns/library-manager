@@ -26,15 +26,9 @@ export default {
 
   searchLibraries(query, language = null, sort = '-published_date') {
     const params = { q: query }
-    
-    if (language) {
-      params.lang = language
-    }
-    
     if (sort) {
       params.sort = sort
     }
-    
     return apiClient.get('/libraries/search/', { params })
   },
 

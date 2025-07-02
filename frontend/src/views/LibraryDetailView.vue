@@ -13,7 +13,10 @@
       <div class="card">
         <div class="d-flex justify-between align-center mb-3">
           <h1 class="library-title">{{ library.name }} <span class="version">{{ library.version }}</span></h1>
-          <router-link to="/" class="btn">Назад</router-link>
+          <div>
+            <router-link to="/" class="btn mr-1">Назад</router-link>
+            <button class="btn danger" @click="onDeleteLibrary">Удалить</button>
+          </div>
         </div>
         
         <div class="library-info">
@@ -81,10 +84,11 @@
 
 <script setup>
 import { computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useLibrariesStore } from '@/stores/libraries';
 
 const route = useRoute();
+const router = useRouter();
 const store = useLibrariesStore();
 
 // Computed properties
@@ -97,6 +101,23 @@ onMounted(async () => {
   const id = route.params.id;
   await store.fetchLibraryById(id);
 });
+
+const onDeleteLibrary = async () => {
+  if (!library.value) return;
+  if (!confirm('Вы действительно хотите удалить эту библиотеку?')) return;
+  try {
+    await store.deleteLibrary(library.value.id);
+    router.push({
+      path: '/',
+      query: {
+        message: 'Библиотека успешно удалена',
+        type: 'success'
+      }
+    });
+  } catch (e) {
+    alert('Ошибка при удалении библиотеки');
+  }
+};
 
 // Helper functions
 const formatDate = (dateString) => {
@@ -221,5 +242,13 @@ const formatFileSize = (bytes) => {
 
 .error-message {
   color: #dc3545;
+}
+
+.btn.danger {
+  background-color: #dc3545;
+  color: white;
+}
+.btn.danger:hover {
+  background-color: #b52a37;
 }
 </style> 

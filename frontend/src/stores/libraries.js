@@ -10,7 +10,6 @@ export const useLibrariesStore = defineStore('libraries', {
     loading: false,
     error: null,
     searchQuery: '',
-    selectedLanguage: null,
     sortBy: '-published_date'
   }),
   
@@ -79,12 +78,11 @@ export const useLibrariesStore = defineStore('libraries', {
     
     async searchLibraries() {
       if (!this.searchQuery.trim()) return
-      
       this.loading = true
       try {
         const response = await api.searchLibraries(
           this.searchQuery, 
-          this.selectedLanguage, 
+          undefined, 
           this.sortBy
         )
         this.libraries = response.data.results || response.data
@@ -132,12 +130,22 @@ export const useLibrariesStore = defineStore('libraries', {
       this.searchQuery = query
     },
     
-    setSelectedLanguage(language) {
-      this.selectedLanguage = language
-    },
-    
     setSortBy(sort) {
       this.sortBy = sort
+    },
+    
+    async deleteLibrary(id) {
+      this.loading = true
+      try {
+        await api.deleteLibrary(id)
+        // После удаления обновляем список библиотек
+        await this.fetchLibraries()
+      } catch (error) {
+        this.error = error.message || 'Ошибка при удалении библиотеки'
+        throw error
+      } finally {
+        this.loading = false
+      }
     }
   }
 }) 
