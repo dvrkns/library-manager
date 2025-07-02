@@ -33,6 +33,9 @@ namespace LibraryManager.Models
 
         [JsonProperty("file")]
         public string? FileUrl { get; set; }
+        
+        [JsonProperty("download_url")]
+        public string? DownloadUrl { get; set; }
 
         [JsonProperty("file_size")]
         public long FileSize { get; set; }

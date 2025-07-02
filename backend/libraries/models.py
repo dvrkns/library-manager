@@ -31,6 +31,7 @@ class Library(models.Model):
     homepage = models.URLField(blank=True, verbose_name='Домашняя страница')
     repository = models.URLField(blank=True, verbose_name='Репозиторий')
     file = models.FileField(upload_to='libraries/', blank=True, null=True, verbose_name='Файл библиотеки')
+    download_url = models.URLField(blank=True, verbose_name='Ссылка для скачивания')
     file_size = models.PositiveIntegerField(default=0, verbose_name='Размер файла (байт)')
     published_date = models.DateTimeField(default=timezone.now, verbose_name='Дата публикации')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')

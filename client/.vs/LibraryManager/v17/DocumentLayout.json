@@ -1,0 +1,41 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\BSTU WorkManager\\library-manager\\client\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{FE5AE41D-3FBB-4E7A-8A02-55B8D4F15C8F}|LibraryManager\\LibraryManager.csproj|d:\\bstu workmanager\\library-manager\\client\\librarymanager\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FE5AE41D-3FBB-4E7A-8A02-55B8D4F15C8F}|LibraryManager\\LibraryManager.csproj|solutionrelative:librarymanager\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e5c86464-96be-4d7c-9a8b-abcb3bbf5f92}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\BSTU WorkManager\\library-manager\\client\\LibraryManager\\Program.cs",
+              "RelativeDocumentMoniker": "LibraryManager\\Program.cs",
+              "ToolTip": "D:\\BSTU WorkManager\\library-manager\\client\\LibraryManager\\Program.cs",
+              "RelativeToolTip": "LibraryManager\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-02T19:10:57.644Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

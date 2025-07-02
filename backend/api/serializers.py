@@ -24,7 +24,7 @@ class LibrarySerializer(serializers.ModelSerializer):
         model = Library
         fields = (
             'id', 'name', 'version', 'description', 'language', 'language_name',
-            'author', 'homepage', 'repository', 'file', 'file_size',
+            'author', 'homepage', 'repository', 'file', 'download_url', 'file_size',
             'published_date', 'created_at', 'updated_at', 'dependencies'
         )
 

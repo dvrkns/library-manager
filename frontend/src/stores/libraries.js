@@ -112,6 +112,22 @@ export const useLibrariesStore = defineStore('libraries', {
       }
     },
     
+    async createLibraryWithFormData(formData) {
+      this.loading = true
+      try {
+        const response = await api.createLibraryWithFormData(formData)
+        // Добавляем новую библиотеку в начало списка
+        this.libraries = [response.data, ...this.libraries]
+        return response.data
+      } catch (error) {
+        this.error = error.message || 'Failed to create library'
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
     setSearchQuery(query) {
       this.searchQuery = query
     },

@@ -41,6 +41,20 @@ export default {
   createLibrary(data) {
     return apiClient.post('/libraries/', data)
   },
+  
+  createLibraryWithFormData(formData) {
+    // Создаем новый экземпляр axios с правильными заголовками для FormData
+    const formDataClient = axios.create({
+      baseURL: 'http://localhost:8000/api',
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json'
+      }
+    })
+    
+    return formDataClient.post('/libraries/', formData)
+  },
 
   updateLibrary(id, data) {
     return apiClient.put(`/libraries/${id}/`, data)

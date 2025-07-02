@@ -26,7 +26,7 @@ namespace LibraryManager.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("/languages/");
+                var response = await _httpClient.GetAsync("/api/languages/");
                 response.EnsureSuccessStatusCode();
 
                 var content = await response.Content.ReadAsStringAsync();
@@ -45,7 +45,7 @@ namespace LibraryManager.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("/libraries/");
+                var response = await _httpClient.GetAsync("/api/libraries/");
                 response.EnsureSuccessStatusCode();
 
                 var content = await response.Content.ReadAsStringAsync();
@@ -64,7 +64,7 @@ namespace LibraryManager.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"/libraries/{id}/");
+                var response = await _httpClient.GetAsync($"/api/libraries/{id}/");
                 response.EnsureSuccessStatusCode();
 
                 var content = await response.Content.ReadAsStringAsync();
@@ -83,7 +83,7 @@ namespace LibraryManager.Services
         {
             try
             {
-                var requestUrl = $"/libraries/search/?q={Uri.EscapeDataString(query)}";
+                var requestUrl = $"/api/libraries/search/?q={Uri.EscapeDataString(query)}";
                 
                 if (!string.IsNullOrEmpty(language))
                 {
