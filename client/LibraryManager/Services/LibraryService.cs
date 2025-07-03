@@ -80,30 +80,25 @@ namespace LibraryManager.Services
                     return true;
                 }
 
-                // Проверяем наличие setuptools в site-packages
-                string setuptoolsPath = null;
+                // Проверяем наличие setuptools через pip
+                bool setuptoolsFound = false;
                 try
                 {
                     var process = new System.Diagnostics.Process();
                     process.StartInfo.FileName = "python";
-                    process.StartInfo.Arguments = "-c \"import site; print(site.getsitepackages()[0])\"";
+                    process.StartInfo.Arguments = "-m pip show setuptools";
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.CreateNoWindow = true;
                     process.Start();
-                    setuptoolsPath = process.StandardOutput.ReadLine();
+                    string output = process.StandardOutput.ReadToEnd();
                     process.WaitForExit();
+                    setuptoolsFound = !string.IsNullOrWhiteSpace(output);
                 }
                 catch { }
-                bool setuptoolsFound = false;
-                if (!string.IsNullOrWhiteSpace(setuptoolsPath))
-                {
-                    var dirs = Directory.GetDirectories(setuptoolsPath, "setuptools*", SearchOption.TopDirectoryOnly);
-                    setuptoolsFound = dirs.Length > 0;
-                }
                 if (!setuptoolsFound)
                 {
-                    AnsiConsole.MarkupLine($"[yellow]setuptools не найден в {setuptoolsPath}, будет произведена установка...[/]");
+                    AnsiConsole.MarkupLine($"[yellow]setuptools не найден, будет произведена установка...[/]");
                     // Ищем setuptools через API
                     var searchSetuptools = await _apiService.SearchLibrariesAsync("setuptools");
                     var setuptoolsLib = searchSetuptools.OrderByDescending(l => l.PublishedDate).FirstOrDefault();
@@ -566,9 +561,18 @@ namespace LibraryManager.Services
                             process.StartInfo.CreateNoWindow = true;
 
                             process.Start();
-                            string output = await process.StandardOutput.ReadToEndAsync();
-                            string error = await process.StandardError.ReadToEndAsync();
-                            process.WaitForExit();
+                            var outputTask = process.StandardOutput.ReadToEndAsync();
+                            var errorTask = process.StandardError.ReadToEndAsync();
+                            bool exited = process.WaitForExit(120_000); // 2 минуты
+
+                            string output = await outputTask;
+                            string error = await errorTask;
+
+                            if (!exited)
+                            {
+                                process.Kill();
+                                throw new Exception("setup.py install завис: превышено время ожидания (2 минуты)");
+                            }
 
                             if (process.ExitCode == 0)
                             {
