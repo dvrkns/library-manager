@@ -80,6 +80,74 @@ namespace LibraryManager.Services
                     return true;
                 }
 
+                // Проверяем наличие setuptools в site-packages
+                string setuptoolsPath = null;
+                try
+                {
+                    var process = new System.Diagnostics.Process();
+                    process.StartInfo.FileName = "python";
+                    process.StartInfo.Arguments = "-c \"import site; print(site.getsitepackages()[0])\"";
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                    setuptoolsPath = process.StandardOutput.ReadLine();
+                    process.WaitForExit();
+                }
+                catch { }
+                bool setuptoolsFound = false;
+                if (!string.IsNullOrWhiteSpace(setuptoolsPath))
+                {
+                    var dirs = Directory.GetDirectories(setuptoolsPath, "setuptools*", SearchOption.TopDirectoryOnly);
+                    setuptoolsFound = dirs.Length > 0;
+                }
+                if (!setuptoolsFound)
+                {
+                    AnsiConsole.MarkupLine($"[yellow]setuptools не найден в {setuptoolsPath}, будет произведена установка...[/]");
+                    // Ищем setuptools через API
+                    var searchSetuptools = await _apiService.SearchLibrariesAsync("setuptools");
+                    var setuptoolsLib = searchSetuptools.OrderByDescending(l => l.PublishedDate).FirstOrDefault();
+                    if (setuptoolsLib == null)
+                        throw new Exception("Не удалось найти setuptools в репозитории");
+                    string tempSetuptoolsPath = null;
+                    bool needCleanupSetuptools = false;
+                    if (!string.IsNullOrEmpty(setuptoolsLib.FileUrl))
+                    {
+                        var fileData = await _apiService.DownloadLibraryFileAsync(setuptoolsLib.FileUrl);
+                        tempSetuptoolsPath = Path.Combine(Path.GetTempPath(), Path.GetFileName(setuptoolsLib.FileUrl) ?? "setuptools.whl");
+                        await File.WriteAllBytesAsync(tempSetuptoolsPath, fileData);
+                        needCleanupSetuptools = true;
+                    }
+                    else if (!string.IsNullOrEmpty(setuptoolsLib.DownloadUrl))
+                    {
+                        tempSetuptoolsPath = Path.Combine(Path.GetTempPath(), $"setuptools-{setuptoolsLib.Version}.whl");
+                        using (var httpClient = new HttpClient())
+                        {
+                            var response = await httpClient.GetAsync(setuptoolsLib.DownloadUrl);
+                            response.EnsureSuccessStatusCode();
+                            using (var fileStream = new FileStream(tempSetuptoolsPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                            {
+                                await response.Content.CopyToAsync(fileStream);
+                            }
+                        }
+                        needCleanupSetuptools = true;
+                    }
+                    else
+                    {
+                        throw new Exception("Для setuptools не найден файл для скачивания");
+                    }
+                    bool setuptoolsInstallResult = await InstallPackageDirectly(tempSetuptoolsPath, "setuptools");
+                    if (needCleanupSetuptools && File.Exists(tempSetuptoolsPath))
+                    {
+                        File.Delete(tempSetuptoolsPath);
+                    }
+                    if (!setuptoolsInstallResult)
+                    {
+                        throw new Exception("Не удалось установить setuptools");
+                    }
+                    AnsiConsole.MarkupLine($"[green]setuptools успешно установлен[/]");
+                }
+
                 // Проверяем наличие файла или URL для скачивания
                 string tempFilePath = null;
                 bool needCleanup = false;

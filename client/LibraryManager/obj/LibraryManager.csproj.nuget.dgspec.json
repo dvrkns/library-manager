@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "D:\\BSTU WorkManager\\library-manager\\client\\LibraryManager\\LibraryManager.csproj": {}
+    "C:\\Users\\darkness\\Documents\\pract\\library-manager\\client\\LibraryManager\\LibraryManager.csproj": {}
   },
   "projects": {
-    "D:\\BSTU WorkManager\\library-manager\\client\\LibraryManager\\LibraryManager.csproj": {
+    "C:\\Users\\darkness\\Documents\\pract\\library-manager\\client\\LibraryManager\\LibraryManager.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\BSTU WorkManager\\library-manager\\client\\LibraryManager\\LibraryManager.csproj",
+        "projectUniqueName": "C:\\Users\\darkness\\Documents\\pract\\library-manager\\client\\LibraryManager\\LibraryManager.csproj",
         "projectName": "LibraryManager",
-        "projectPath": "D:\\BSTU WorkManager\\library-manager\\client\\LibraryManager\\LibraryManager.csproj",
-        "packagesPath": "C:\\Users\\Egor\\.nuget\\packages\\",
-        "outputPath": "D:\\BSTU WorkManager\\library-manager\\client\\LibraryManager\\obj\\",
+        "projectPath": "C:\\Users\\darkness\\Documents\\pract\\library-manager\\client\\LibraryManager\\LibraryManager.csproj",
+        "packagesPath": "C:\\Users\\darkness\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\darkness\\Documents\\pract\\library-manager\\client\\LibraryManager\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "D:\\Program Files (x86)\\VS2022\\.Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Egor\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\darkness\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -43,8 +43,7 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "9.0.200"
+        }
       },
       "frameworks": {
         "net6.0": {
@@ -83,7 +82,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400\\RuntimeIdentifierGraph.json"
         }
       }
     }

@@ -8,28 +8,6 @@
     
     <form @submit.prevent="submitForm" enctype="multipart/form-data">
       <div class="form-group">
-        <label for="name">Название библиотеки*</label>
-        <input 
-          id="name" 
-          v-model="form.name" 
-          type="text" 
-          required 
-          placeholder="Например: React, Vue, Django"
-        />
-      </div>
-      
-      <div class="form-group">
-        <label for="version">Версия*</label>
-        <input 
-          id="version" 
-          v-model="form.version" 
-          type="text" 
-          required 
-          placeholder="Например: 1.0.0, 2.3.1"
-        />
-      </div>
-      
-      <div class="form-group">
         <label for="description">Описание</label>
         <textarea 
           id="description" 
@@ -83,6 +61,10 @@
               <div v-else class="selected-file">
                 <p>{{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})</p>
                 <button type="button" class="remove-file" @click.stop="removeFile">×</button>
+                <div class="auto-fields">
+                  <div><b>Название:</b> {{ form.name }}</div>
+                  <div><b>Версия:</b> {{ form.version }}</div>
+                </div>
               </div>
             </div>
             <input 
@@ -183,6 +165,7 @@ const onFileChange = (event) => {
   const file = event.target.files[0];
   if (file) {
     selectedFile.value = file;
+    autofillNameAndVersion(file.name);
   }
 };
 
@@ -190,6 +173,7 @@ const onFileDrop = (event) => {
   const file = event.dataTransfer.files[0];
   if (file) {
     selectedFile.value = file;
+    autofillNameAndVersion(file.name);
   }
 };
 
@@ -198,7 +182,23 @@ const removeFile = () => {
   if (fileInput.value) {
     fileInput.value.value = '';
   }
+  form.name = '';
+  form.version = '';
 };
+
+function autofillNameAndVersion(filename) {
+  // Удаляем расширение
+  const nameWithoutExt = filename.replace(/\.[^.]+$/, '');
+  // Ищем последний дефис
+  const lastDash = nameWithoutExt.lastIndexOf('-');
+  if (lastDash > 0) {
+    form.name = nameWithoutExt.slice(0, lastDash);
+    form.version = nameWithoutExt.slice(lastDash + 1);
+  } else {
+    form.name = nameWithoutExt;
+    form.version = '';
+  }
+}
 
 const formatFileSize = (bytes) => {
   if (bytes < 1024) return bytes + ' B';
@@ -215,6 +215,12 @@ const submitForm = async () => {
     // Проверяем, что язык выбран
     if (!form.language) {
       throw new Error('Необходимо выбрать язык программирования');
+    }
+    // Если выбран файл, проверяем что имя и версия определены
+    if (uploadMethod.value === 'file') {
+      if (!form.name || !form.version) {
+        throw new Error('Не удалось определить название или версию из имени файла');
+      }
     }
     
     const formData = new FormData();

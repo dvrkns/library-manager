@@ -34,18 +34,12 @@ namespace LibraryManager.Commands
             var table = new Table();
             table.AddColumn("Название");
             table.AddColumn("Версия");
-            table.AddColumn("Язык");
-            table.AddColumn("Автор");
-            table.AddColumn("Дата публикации");
 
             foreach (var library in results)
             {
                 table.AddRow(
                     library.Name,
-                    library.Version,
-                    library.LanguageName ?? "Н/Д",
-                    library.Author ?? "Н/Д",
-                    library.PublishedDate.ToString("dd.MM.yyyy HH:mm")
+                    library.Version
                 );
             }
 
@@ -117,16 +111,12 @@ namespace LibraryManager.Commands
             var table = new Table();
             table.AddColumn("Название");
             table.AddColumn("Версия");
-            table.AddColumn("Язык");
-            table.AddColumn("Дата публикации");
 
             foreach (var library in libraries)
             {
                 table.AddRow(
                     library.Name,
-                    library.Version,
-                    library.LanguageName ?? "Н/Д",
-                    library.PublishedDate.ToString("dd.MM.yyyy HH:mm")
+                    library.Version
                 );
             }
 

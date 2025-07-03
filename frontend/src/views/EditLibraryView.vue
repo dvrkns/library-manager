@@ -155,19 +155,6 @@
         <!-- Форма добавления новой версии -->
         <div class="add-version-form">
           <h3 class="section-title">Добавить новую версию</h3>
-          
-          <div class="form-group">
-            <label for="new-version">Номер версии: <span class="required">*</span></label>
-            <input 
-              type="text" 
-              id="new-version" 
-              v-model="newVersionForm.version" 
-              placeholder="Например: 1.0.1"
-              required
-            />
-            <small class="form-help">Укажите уникальный номер версии, отличный от уже существующих</small>
-          </div>
-          
           <div class="form-group">
             <label>Файл библиотеки: <span class="required">*</span></label>
             <div class="file-upload">
@@ -183,10 +170,12 @@
               <div class="file-info" v-if="newVersionForm.file">
                 <span>Выбран файл: {{ newVersionForm.file.name }}</span>
                 <span>({{ formatFileSize(newVersionForm.file.size) }})</span>
+                <div class="auto-fields">
+                  <div><b>Версия:</b> {{ newVersionForm.version }}</div>
+                </div>
               </div>
             </div>
           </div>
-          
           <div class="form-group" v-if="!newVersionForm.file">
             <label for="new-download-url">Ссылка для скачивания: <span class="required">*</span></label>
             <input 
@@ -197,7 +186,6 @@
             />
             <small class="form-help">Требуется загрузить файл или указать ссылку для скачивания</small>
           </div>
-          
           <div class="form-actions">
             <button 
               class="btn-action btn-success" 
@@ -256,8 +244,7 @@ const newVersionForm = reactive({
 // Проверка валидности формы для новой версии
 const isNewVersionFormValid = computed(() => {
   return (
-    newVersionForm.version &&
-    (newVersionForm.file || newVersionForm.download_url)
+    (newVersionForm.file && newVersionForm.version) || newVersionForm.download_url
   );
 });
 
@@ -329,8 +316,21 @@ const handleNewFileChange = (event) => {
   const file = event.target.files[0];
   if (file) {
     newVersionForm.file = file;
+    autofillVersionFromFilename(file.name);
   }
 };
+
+function autofillVersionFromFilename(filename) {
+  // Удаляем расширение
+  const nameWithoutExt = filename.replace(/\.[^.]+$/, '');
+  // Ищем последний дефис
+  const lastDash = nameWithoutExt.lastIndexOf('-');
+  if (lastDash > 0) {
+    newVersionForm.version = nameWithoutExt.slice(lastDash + 1);
+  } else {
+    newVersionForm.version = '';
+  }
+}
 
 // Сохранение изменений основной информации
 const updateLibrary = async () => {

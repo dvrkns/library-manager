@@ -90,8 +90,7 @@ const libraryGroups = computed(() => {
     // Фильтр по поисковой строке
     return !filterQuery.value || 
       lib.name.toLowerCase().includes(filterQuery.value.toLowerCase()) || 
-      lib.version.toLowerCase().includes(filterQuery.value.toLowerCase()) ||
-      (lib.description && lib.description.toLowerCase().includes(filterQuery.value.toLowerCase()));
+      lib.version.toLowerCase().includes(filterQuery.value.toLowerCase());
   });
   
   // Группируем по имени библиотеки
