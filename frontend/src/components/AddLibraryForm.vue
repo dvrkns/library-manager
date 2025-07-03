@@ -40,6 +40,19 @@
       </div>
       
       <div class="form-group">
+        <label for="language">Язык программирования*</label>
+        <select 
+          id="language" 
+          v-model="form.language" 
+          required
+        >
+          <option v-for="lang in languages" :key="lang.id" :value="lang.id">
+            {{ lang.name }}
+          </option>
+        </select>
+      </div>
+      
+      <div class="form-group">
         <label for="author">Автор</label>
         <input 
           id="author" 
@@ -70,7 +83,7 @@
       </div>
       
       <div class="form-group">
-        <label>Файл библиотеки</label>
+        <label>Файл библиотеки*</label>
         <div class="file-upload-container">
           <div class="upload-tabs">
             <button 
@@ -166,7 +179,7 @@ const form = reactive({
   name: '',
   version: '',
   description: '',
-  language: null, // Будет установлен автоматически на Python
+  language: null,
   author: '',
   homepage: '',
   repository: '',
@@ -182,21 +195,16 @@ const fileInput = ref(null);
 
 // Получаем список языков из хранилища
 const languages = computed(() => store.languages);
-let pythonLanguageId = null;
 
-// Загружаем языки при монтировании компонента и находим ID для Python
+// Загружаем языки при монтировании компонента
 onMounted(async () => {
   if (!languages.value.length) {
     await store.fetchLanguages();
   }
   
-  // Находим ID языка Python
-  const python = languages.value.find(lang => lang.name.toLowerCase() === 'python');
-  if (python) {
-    pythonLanguageId = python.id;
-    form.language = pythonLanguageId;
-  } else {
-    error.value = 'Язык Python не найден в базе данных';
+  // Если есть языки, выбираем первый по умолчанию
+  if (languages.value.length > 0) {
+    form.language = languages.value[0].id;
   }
 });
 
@@ -238,9 +246,9 @@ const submitForm = async () => {
   error.value = '';
   
   try {
-    // Проверяем, что язык Python найден
+    // Проверяем, что язык выбран
     if (!form.language) {
-      throw new Error('Язык Python не найден в базе данных');
+      throw new Error('Необходимо выбрать язык программирования');
     }
     
     const formData = new FormData();
@@ -252,37 +260,26 @@ const submitForm = async () => {
       }
     });
     
-    // Если выбран метод загрузки файла и файл выбран
+    // Добавляем файл, если он выбран
     if (uploadMethod.value === 'file' && selectedFile.value) {
       formData.append('file', selectedFile.value);
     }
     
+    // Проверяем, что есть файл или URL
+    if (uploadMethod.value === 'file' && !selectedFile.value && !form.download_url) {
+      throw new Error('Необходимо загрузить файл или указать URL для скачивания');
+    }
+    
+    // Отправляем данные
     await store.createLibraryWithFormData(formData);
+    
+    // Сообщаем об успешном добавлении
     emit('added');
-    resetForm();
   } catch (err) {
+    console.error('Ошибка при добавлении библиотеки:', err);
     error.value = err.message || 'Произошла ошибка при добавлении библиотеки';
-    console.error(err);
   } finally {
     loading.value = false;
-  }
-};
-
-// Сброс формы
-const resetForm = () => {
-  Object.keys(form).forEach(key => {
-    if (key === 'published_date') {
-      form[key] = new Date().toISOString().split('T')[0];
-    } else if (key === 'language') {
-      form[key] = pythonLanguageId;
-    } else {
-      form[key] = '';
-    }
-  });
-  selectedFile.value = null;
-  uploadMethod.value = 'file';
-  if (fileInput.value) {
-    fileInput.value.value = '';
   }
 };
 </script>
@@ -295,8 +292,14 @@ const resetForm = () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.form-group {
+h2 {
+  margin-top: 0;
   margin-bottom: 1.5rem;
+  color: var(--primary-color);
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
 }
 
 label {
@@ -305,24 +308,103 @@ label {
   font-weight: 500;
 }
 
-input, select, textarea {
+input[type="text"],
+input[type="url"],
+input[type="date"],
+textarea,
+select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
 }
 
-textarea {
-  resize: vertical;
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.1);
 }
 
 .error-message {
   background-color: #ffebee;
-  color: #d32f2f;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+  color: var(--danger-color);
+  padding: 0.75rem;
   border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.file-upload-container {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.upload-tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tab-btn.active {
+  background-color: #f1f5ff;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.upload-area {
+  padding: 1rem;
+}
+
+.dropzone {
+  border: 2px dashed #ddd;
+  border-radius: 4px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.dropzone:hover {
+  border-color: var(--primary-color);
+}
+
+.dropzone i {
+  font-size: 2rem;
+  color: #aaa;
+  margin-bottom: 0.5rem;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: var(--danger-color);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.url-input {
+  padding: 1rem;
 }
 
 .form-actions {
@@ -345,7 +427,7 @@ textarea {
   color: white;
 }
 
-.btn.primary:hover {
+.btn.primary:hover:not(:disabled) {
   background-color: #3050d8;
 }
 
@@ -354,75 +436,26 @@ textarea {
   color: var(--text-color);
 }
 
-.btn.secondary:hover {
+.btn.secondary:hover:not(:disabled) {
   background-color: #dee2e6;
 }
 
-/* Стили для загрузки файлов */
-.file-upload-container {
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  overflow: hidden;
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.upload-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 0.75rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s;
-}
-
-.tab-btn.active {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.upload-area {
-  padding: 1rem;
-}
-
-.dropzone {
-  border: 2px dashed var(--border-color);
-  border-radius: 4px;
-  padding: 2rem;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.3s;
-}
-
-.dropzone:hover {
-  border-color: var(--primary-color);
-}
-
-.dropzone i {
-  font-size: 2rem;
-  color: var(--text-light);
-  margin-bottom: 0.5rem;
-}
-
-.selected-file {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.remove-file {
-  background: none;
-  border: none;
-  color: #d32f2f;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.url-input {
-  padding: 1rem;
+@media (max-width: 768px) {
+  .add-library-form {
+    padding: 1.5rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
 }
 </style> 

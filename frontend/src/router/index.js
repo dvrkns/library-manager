@@ -7,17 +7,42 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: HomeView,
+      meta: {
+        showSearch: true // Only the home page will have search enabled
+      }
+    },
+    {
+      path: '/libraries',
+      name: 'all-libraries',
+      component: () => import('../views/AllLibrariesView.vue'),
+      meta: {
+        showSearch: false
+      }
     },
     {
       path: '/libraries/:id',
       name: 'library-detail',
-      component: () => import('../views/LibraryDetailView.vue')
+      component: () => import('../views/LibraryDetailView.vue'),
+      meta: {
+        showSearch: false
+      }
     },
     {
       path: '/add-library',
       name: 'add-library',
-      component: () => import('../views/AddLibraryView.vue')
+      component: () => import('../views/AddLibraryView.vue'),
+      meta: {
+        showSearch: false
+      }
+    },
+    {
+      path: '/edit-library/:id',
+      name: 'edit-library',
+      component: () => import('../views/EditLibraryView.vue'),
+      meta: {
+        showSearch: false
+      }
     }
   ]
 })

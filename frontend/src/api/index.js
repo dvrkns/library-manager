@@ -19,6 +19,11 @@ export default {
   getLibraries(params = {}) {
     return apiClient.get('/libraries/', { params })
   },
+  
+  getAllLibraries() {
+    // Запрашиваем все библиотеки без пагинации
+    return apiClient.get('/libraries/all/')
+  },
 
   getLibrary(id) {
     return apiClient.get(`/libraries/${id}/`)
@@ -53,8 +58,27 @@ export default {
   updateLibrary(id, data) {
     return apiClient.put(`/libraries/${id}/`, data)
   },
+  
+  updateLibraryWithFormData(id, formData) {
+    // Создаем новый экземпляр axios с правильными заголовками для FormData
+    const formDataClient = axios.create({
+      baseURL: 'http://localhost:8000/api',
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json'
+      }
+    })
+    
+    return formDataClient.put(`/libraries/${id}/`, formData)
+  },
 
   deleteLibrary(id) {
     return apiClient.delete(`/libraries/${id}/`)
+  },
+  
+  getLibraryVersions(name) {
+    // Получаем все версии библиотеки по имени
+    return apiClient.get('/libraries/versions/', { params: { name } })
   }
 } 

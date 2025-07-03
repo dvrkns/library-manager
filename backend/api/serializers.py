@@ -18,12 +18,13 @@ class DependencySerializer(serializers.ModelSerializer):
 
 class LibrarySerializer(serializers.ModelSerializer):
     language_name = serializers.StringRelatedField(source='language', read_only=True)
+    language_slug = serializers.SlugRelatedField(source='language', read_only=True, slug_field='slug')
     dependencies = DependencySerializer(many=True, read_only=True)
     
     class Meta:
         model = Library
         fields = (
-            'id', 'name', 'version', 'description', 'language', 'language_name',
+            'id', 'name', 'version', 'description', 'language', 'language_name', 'language_slug',
             'author', 'homepage', 'repository', 'file', 'download_url', 'file_size',
             'published_date', 'created_at', 'updated_at', 'dependencies'
         )

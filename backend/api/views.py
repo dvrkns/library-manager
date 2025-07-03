@@ -75,4 +75,43 @@ class LibraryViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
             
         serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def all(self, request):
+        """
+        Получение всех библиотек без пагинации
+        """
+        queryset = self.get_queryset()
+        
+        # Применяем фильтры, если они указаны
+        language = request.query_params.get('lang', None)
+        if language:
+            queryset = queryset.filter(language__slug=language)
+        
+        # Сортировка
+        sort_by = request.query_params.get('sort', '-published_date')
+        if sort_by not in self.ordering_fields and sort_by not in [f'-{field}' for field in self.ordering_fields]:
+            sort_by = '-published_date'
+        
+        queryset = queryset.order_by(sort_by)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def versions(self, request):
+        """
+        Получение всех версий библиотеки по имени
+        """
+        name = request.query_params.get('name', '')
+        if not name:
+            return Response({'error': 'Необходимо указать параметр name для поиска версий'}, status=400)
+        
+        queryset = self.get_queryset().filter(name__iexact=name)
+        
+        # Сортировка по версии (от новых к старым)
+        queryset = queryset.order_by('-published_date')
+        
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data) 

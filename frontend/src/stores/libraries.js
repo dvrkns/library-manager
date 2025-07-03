@@ -63,6 +63,20 @@ export const useLibrariesStore = defineStore('libraries', {
       }
     },
     
+    async fetchAllLibraries() {
+      this.loading = true
+      try {
+        const response = await api.getAllLibraries()
+        return response.data.results || response.data
+      } catch (error) {
+        this.error = error.message || 'Failed to fetch all libraries'
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
     async fetchLibraryById(id) {
       this.loading = true
       try {
@@ -119,6 +133,72 @@ export const useLibrariesStore = defineStore('libraries', {
         return response.data
       } catch (error) {
         this.error = error.message || 'Failed to create library'
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async updateLibrary(id, libraryData) {
+      this.loading = true
+      try {
+        const response = await api.updateLibrary(id, libraryData)
+        
+        // Обновляем библиотеку в списке, если она там есть
+        const index = this.libraries.findIndex(lib => lib.id === parseInt(id))
+        if (index !== -1) {
+          this.libraries[index] = response.data
+        }
+        
+        // Обновляем текущую библиотеку, если она открыта
+        if (this.library && this.library.id === parseInt(id)) {
+          this.library = response.data
+        }
+        
+        return response.data
+      } catch (error) {
+        this.error = error.message || 'Failed to update library'
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async updateLibraryWithFormData(id, formData) {
+      this.loading = true
+      try {
+        const response = await api.updateLibraryWithFormData(id, formData)
+        
+        // Обновляем библиотеку в списке, если она там есть
+        const index = this.libraries.findIndex(lib => lib.id === parseInt(id))
+        if (index !== -1) {
+          this.libraries[index] = response.data
+        }
+        
+        // Обновляем текущую библиотеку, если она открыта
+        if (this.library && this.library.id === parseInt(id)) {
+          this.library = response.data
+        }
+        
+        return response.data
+      } catch (error) {
+        this.error = error.message || 'Failed to update library'
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async getLibraryVersions(name) {
+      this.loading = true
+      try {
+        const response = await api.getLibraryVersions(name)
+        return response.data.results || response.data
+      } catch (error) {
+        this.error = error.message || 'Failed to fetch library versions'
         console.error(error)
         throw error
       } finally {
