@@ -239,12 +239,54 @@ namespace LibraryManager.Services
 
                 // Удаляем библиотеку
                 AnsiConsole.MarkupLine($"[blue]Удаление библиотеки {libraryName}...[/]");
-                
+
                 // Удаляем директорию библиотеки
                 var libraryDir = Path.Combine(_sitePackagesPath, libraryName.ToLower());
                 if (Directory.Exists(libraryDir))
                 {
                     Directory.Delete(libraryDir, true);
+                }
+                // Дополнительно: удаляем установленную библиотеку из системного site-packages Python
+                try
+                {
+                    // Получаем путь к системному site-packages
+                    var process = new System.Diagnostics.Process();
+                    process.StartInfo.FileName = "python";
+                    process.StartInfo.Arguments = "-c \"import site; print(site.getsitepackages()[0])\"";
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                    string sitePackagesPath = process.StandardOutput.ReadLine() + "\\Lib\\site-packages";
+                    process.WaitForExit();
+                    AnsiConsole.MarkupLine($"[blue]Удаление библиотеки {libraryName} из {sitePackagesPath}[/]");
+                    if (!string.IsNullOrWhiteSpace(sitePackagesPath))
+                    {
+                        // Ищем все папки, начинающиеся с имени библиотеки
+                        var dirs = Directory.GetDirectories(sitePackagesPath, libraryName.ToLower() + "*", SearchOption.TopDirectoryOnly);
+                        bool anyDeleted = false;
+                        foreach (var dir in dirs)
+                        {
+                            try
+                            {
+                                Directory.Delete(dir, true);
+                                AnsiConsole.MarkupLine($"[green]Удалена папка: {dir}[/]");
+                                anyDeleted = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                AnsiConsole.MarkupLine($"[yellow]Не удалось удалить {dir}: {ex.Message}[/]");
+                            }
+                        }
+                        if (!anyDeleted)
+                        {
+                            AnsiConsole.MarkupLine($"[yellow]Папки для удаления не найдены по шаблону {libraryName.ToLower()}*[/]");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.MarkupLine($"[yellow]Не удалось удалить из системного site-packages: {ex.Message}[/]");
                 }
 
                 // Обновляем список установленных библиотек
@@ -316,6 +358,7 @@ namespace LibraryManager.Services
                     Version = "1.0.0",
                     Description = "Тестовый локальный пакет",
                     LanguageId = 1, // Python
+                    LanguageName = "Python",
                     PublishedDate = DateTime.Now
                 };
                 
@@ -437,6 +480,44 @@ namespace LibraryManager.Services
                     
                     // Находим директорию с исходным кодом библиотеки
                     string sourceDir = FindSourceDirectory(tempExtractDir, libraryName);
+
+                    // Если найден setup.py, вызываем python setup.py install
+                    string setupPath = Path.Combine(sourceDir, "setup.py");
+                    if (File.Exists(setupPath))
+                    {
+                        AnsiConsole.MarkupLine($"[blue]Обнаружен setup.py, выполняется python setup.py install...[/]");
+                        try
+                        {
+                            var process = new System.Diagnostics.Process();
+                            process.StartInfo.FileName = "python";
+                            process.StartInfo.Arguments = "setup.py install";
+                            process.StartInfo.WorkingDirectory = sourceDir;
+                            process.StartInfo.RedirectStandardOutput = true;
+                            process.StartInfo.RedirectStandardError = true;
+                            process.StartInfo.UseShellExecute = false;
+                            process.StartInfo.CreateNoWindow = true;
+
+                            process.Start();
+                            string output = await process.StandardOutput.ReadToEndAsync();
+                            string error = await process.StandardError.ReadToEndAsync();
+                            process.WaitForExit();
+
+                            if (process.ExitCode == 0)
+                            {
+                                AnsiConsole.MarkupLine($"[green]setup.py install успешно выполнен[/]");
+                            }
+                            else
+                            {
+                                AnsiConsole.MarkupLine($"[red]Ошибка при выполнении setup.py install: {error}[/]");
+                                throw new Exception($"setup.py install завершился с ошибкой: {error}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            AnsiConsole.MarkupLine($"[red]Ошибка при запуске python setup.py install: {ex.Message}[/]");
+                            throw;
+                        }
+                    }
                     
                     // Создаем директорию для библиотеки, если она не существует
                     if (Directory.Exists(libraryDir))

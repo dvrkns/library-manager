@@ -6,18 +6,13 @@
     </div>
     
     <div class="card-body">
-      <div class="library-date mb-2">
-        <span class="text-muted">Опубликовано: </span>
-        <span>{{ formatDate(library.published_date) }}</span>
-      </div>
-      
       <div v-if="library.description" class="library-description mb-2">
         <p>{{ truncateDescription(library.description) }}</p>
       </div>
       
-      <div v-if="library.author" class="library-author mb-2">
-        <span class="text-muted">Автор: </span>
-        <span>{{ library.author }}</span>
+      <div class="library-size mb-2">
+        <span class="text-muted">Размер: </span>
+        <span>{{ formatFileSize(library.file_size) }}</span>
       </div>
     </div>
     
@@ -39,18 +34,24 @@ const props = defineProps({
   }
 });
 
-const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('ru-RU', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  }).format(date);
-};
-
 const truncateDescription = (text, maxLength = 100) => {
   if (!text || text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
+};
+
+const formatFileSize = (bytes) => {
+  if (!bytes || bytes === 0) return 'Н/Д';
+  
+  const units = ['байт', 'КБ', 'МБ', 'ГБ'];
+  let size = bytes;
+  let unitIndex = 0;
+  
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  
+  return `${size.toFixed(1)} ${units[unitIndex]}`;
 };
 </script>
 

@@ -16,20 +16,8 @@
       
       <div class="library-details">
         <div class="detail-item">
-          <span class="detail-label">Язык:</span>
-          <span class="detail-value">{{ library.language_name }}</span>
-        </div>
-        <div class="detail-item">
           <span class="detail-label">Размер:</span>
           <span class="detail-value">{{ formatFileSize(library.file_size) }}</span>
-        </div>
-        <div class="detail-item" v-if="library.author">
-          <span class="detail-label">Автор:</span>
-          <span class="detail-value">{{ library.author }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Опубликовано:</span>
-          <span class="detail-value">{{ formatDate(library.published_date) }}</span>
         </div>
       </div>
     </div>
@@ -117,15 +105,6 @@ const onVersionChange = () => {
 const truncateDescription = (text, maxLength = 150) => {
   if (!text || text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
-};
-
-const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('ru-RU', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  }).format(date);
 };
 
 const formatFileSize = (bytes) => {

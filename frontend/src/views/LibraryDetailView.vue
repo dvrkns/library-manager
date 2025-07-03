@@ -24,11 +24,6 @@
             <h3 class="section-title mb-1">Основная информация</h3>
             <div class="info-grid">
               <div class="info-item">
-                <span class="label">Язык программирования:</span>
-                <span class="value badge">{{ library.language_name }}</span>
-              </div>
-              
-              <div class="info-item">
                 <span class="label">Дата публикации:</span>
                 <span class="value">{{ formatDate(library.published_date) }}</span>
               </div>
@@ -36,11 +31,6 @@
               <div class="info-item">
                 <span class="label">Размер файла:</span>
                 <span class="value">{{ formatFileSize(library.file_size) }}</span>
-              </div>
-              
-              <div v-if="library.author" class="info-item">
-                <span class="label">Автор:</span>
-                <span class="value">{{ library.author }}</span>
               </div>
             </div>
           </div>
@@ -53,7 +43,6 @@
           <div class="info-section mb-3">
             <h3 class="section-title mb-1">Ссылки</h3>
             <div class="links">
-              <a v-if="library.homepage" :href="library.homepage" target="_blank" class="link">Домашняя страница</a>
               <a v-if="library.repository" :href="library.repository" target="_blank" class="link">Репозиторий</a>
               <a v-if="library.file" :href="library.file" target="_blank" class="link">Скачать файл</a>
             </div>
@@ -102,38 +91,19 @@ onMounted(async () => {
   await store.fetchLibraryById(id);
 });
 
-const onDeleteLibrary = async () => {
-  if (!library.value) return;
-  if (!confirm('Вы действительно хотите удалить эту библиотеку?')) return;
-  try {
-    await store.deleteLibrary(library.value.id);
-    router.push({
-      path: '/',
-      query: {
-        message: 'Библиотека успешно удалена',
-        type: 'success'
-      }
-    });
-  } catch (e) {
-    alert('Ошибка при удалении библиотеки');
-  }
-};
-
-// Helper functions
+// Utility functions
 const formatDate = (dateString) => {
+  if (!dateString) return 'Не указано';
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('ru-RU', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  return new Intl.DateTimeFormat('ru-RU', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   }).format(date);
 };
 
 const formatFileSize = (bytes) => {
-  if (!bytes || bytes === 0) return 'Н/Д';
-  
+  if (!bytes) return 'Неизвестно';
   const units = ['байт', 'КБ', 'МБ', 'ГБ'];
   let size = bytes;
   let unitIndex = 0;
@@ -145,45 +115,81 @@ const formatFileSize = (bytes) => {
   
   return `${size.toFixed(1)} ${units[unitIndex]}`;
 };
+
+// Delete library handler
+const onDeleteLibrary = async () => {
+  if (!confirm('Вы действительно хотите удалить эту библиотеку? Это действие нельзя отменить.')) {
+    return;
+  }
+  
+  try {
+    await store.deleteLibrary(library.value.id);
+    router.push('/');
+  } catch (error) {
+    console.error('Ошибка при удалении библиотеки:', error);
+  }
+};
 </script>
 
 <style scoped>
+.library-detail {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
 .library-title {
-  font-size: 2rem;
+  font-size: 1.75rem;
+  margin: 0;
   color: var(--primary-color);
 }
 
 .version {
-  background-color: #e6effd;
-  color: var(--primary-color);
   font-size: 1rem;
+  background-color: #e6f2ff;
+  color: var(--primary-color);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  vertical-align: middle;
+  margin-left: 0.5rem;
+}
+
+.library-info {
+  margin-top: 1.5rem;
 }
 
 .section-title {
   font-size: 1.25rem;
   color: #333;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1rem;
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 
 .label {
-  font-weight: bold;
+  font-size: 0.875rem;
   color: #666;
-  margin-bottom: 0.25rem;
+}
+
+.value {
+  font-weight: 500;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: #e6f2ff;
+  color: var(--primary-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
 }
 
 .description {

@@ -16,9 +16,14 @@
       <p>Загрузка данных библиотеки...</p>
     </div>
     
-    <div v-else-if="error" class="error-container">
-      <p class="error-message">{{ error }}</p>
-      <button class="btn-action btn-primary" @click="fetchLibrary">Повторить попытку</button>
+    <div v-else-if="error && typeof error === 'string'" class="notification error">
+      {{ error }}
+      <button class="close-btn" @click="error = null">&times;</button>
+    </div>
+    
+    <div v-else-if="error && error.type" class="notification" :class="error.type">
+      {{ error.message }}
+      <button class="close-btn" @click="error = null">&times;</button>
     </div>
     
     <template v-else-if="library">
@@ -64,51 +69,32 @@
         </div>
         
         <div class="form-group">
-          <label for="edit-language">Язык программирования:</label>
-          <select id="edit-language" v-model="editForm.language">
-            <option v-for="lang in languages" :key="lang.id" :value="lang.id">
-              {{ lang.name }}
-            </option>
-          </select>
+          <label for="edit-repository">Репозиторий:</label>
+          <input 
+            type="url" 
+            id="edit-repository" 
+            v-model="editForm.repository" 
+            placeholder="https://github.com/example/repo"
+          />
         </div>
         
-        <div class="form-row">
-          <div class="form-group">
-            <label for="edit-author">Автор:</label>
-            <input 
-              type="text" 
-              id="edit-author" 
-              v-model="editForm.author" 
-              placeholder="Автор библиотеки"
-            />
+        <div class="current-version-info">
+          <h3 class="section-title">Текущая версия</h3>
+          <div class="version-badge">
+            {{ library.version }}
           </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label for="edit-homepage">Домашняя страница:</label>
-            <input 
-              type="url" 
-              id="edit-homepage" 
-              v-model="editForm.homepage" 
-              placeholder="https://example.com"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label for="edit-repository">Репозиторий:</label>
-            <input 
-              type="url" 
-              id="edit-repository" 
-              v-model="editForm.repository" 
-              placeholder="https://github.com/example/repo"
-            />
-          </div>
+          <p class="version-hint">
+            Вы можете <a href="#" @click.prevent="goToAddVersionForm">добавить новую версию</a> 
+            или управлять существующими версиями на вкладке "Управление версиями".
+          </p>
         </div>
         
         <div class="form-actions">
           <button class="btn-action btn-success" @click="updateLibrary" :disabled="updating">
             {{ updating ? 'Сохранение...' : 'Сохранить изменения' }}
+          </button>
+          <button class="btn-action btn-primary" @click="goToAddVersionForm">
+            Управление версиями
           </button>
           <button class="btn-action btn-danger" @click="confirmDelete">
             Удалить библиотеку
@@ -119,6 +105,11 @@
       <!-- Управление версиями библиотеки -->
       <div v-if="activeTab === 'versions'" class="versions-panel card">
         <h2 class="form-title">Управление версиями</h2>
+        
+        <div class="version-info-panel">
+          <p>Здесь вы можете добавлять новые версии библиотеки и управлять существующими версиями.</p>
+          <p>Каждая версия должна иметь уникальный номер. Текущее название библиотеки: <strong>{{ library.name }}</strong>.</p>
+        </div>
         
         <!-- Список существующих версий -->
         <div class="versions-list">
@@ -174,16 +165,7 @@
               placeholder="Например: 1.0.1"
               required
             />
-          </div>
-          
-          <div class="form-group">
-            <label for="new-published-date">Дата публикации: <span class="required">*</span></label>
-            <input 
-              type="date" 
-              id="new-published-date" 
-              v-model="newVersionForm.published_date" 
-              required
-            />
+            <small class="form-help">Укажите уникальный номер версии, отличный от уже существующих</small>
           </div>
           
           <div class="form-group">
@@ -197,7 +179,6 @@
                 id="new-file" 
                 @change="handleNewFileChange"
                 class="file-input"
-                required
               />
               <div class="file-info" v-if="newVersionForm.file">
                 <span>Выбран файл: {{ newVersionForm.file.name }}</span>
@@ -224,6 +205,9 @@
               :disabled="adding || !isNewVersionFormValid"
             >
               {{ adding ? 'Добавление...' : 'Добавить версию' }}
+            </button>
+            <button class="btn-action btn-secondary" @click="activeTab = 'edit'">
+              Вернуться к редактированию
             </button>
             <button class="btn-action btn-danger" @click="resetNewVersionForm">
               Очистить форму
@@ -259,16 +243,12 @@ const languages = computed(() => store.languages);
 const editForm = reactive({
   name: '',
   description: '',
-  author: '',
-  language: null,
-  homepage: '',
   repository: ''
 });
 
 // Форма добавления новой версии
 const newVersionForm = reactive({
   version: '',
-  published_date: new Date().toISOString().slice(0, 10),
   file: null,
   download_url: ''
 });
@@ -277,7 +257,6 @@ const newVersionForm = reactive({
 const isNewVersionFormValid = computed(() => {
   return (
     newVersionForm.version &&
-    newVersionForm.published_date &&
     (newVersionForm.file || newVersionForm.download_url)
   );
 });
@@ -304,9 +283,6 @@ const fetchLibrary = async () => {
     if (library.value) {
       editForm.name = library.value.name;
       editForm.description = library.value.description || '';
-      editForm.author = library.value.author || '';
-      editForm.language = library.value.language;
-      editForm.homepage = library.value.homepage || '';
       editForm.repository = library.value.repository || '';
       
       // Загрузка версий библиотеки
@@ -328,9 +304,21 @@ const fetchVersions = async (name) => {
   
   try {
     const response = await store.getLibraryVersions(name);
-    versions.value = response;
+    
+    // Убедимся, что получили массив версий
+    if (Array.isArray(response)) {
+      versions.value = response;
+    } else {
+      console.error('Некорректный формат данных версий:', response);
+      versions.value = [];
+    }
   } catch (err) {
     console.error('Ошибка при загрузке версий библиотеки:', err);
+    error.value = {
+      type: 'error',
+      message: 'Не удалось загрузить версии библиотеки'
+    };
+    versions.value = [];
   } finally {
     loadingVersions.value = false;
   }
@@ -353,39 +341,45 @@ const updateLibrary = async () => {
   
   try {
     // Создание данных для обновления
-    const updateData = {
-      name: editForm.name,
-      description: editForm.description,
-      author: editForm.author,
-      language: editForm.language,
-      homepage: editForm.homepage,
-      repository: editForm.repository,
-      // Сохраняем текущую версию и файл
-      version: library.value.version,
-      file: library.value.file,
-      download_url: library.value.download_url,
-      published_date: library.value.published_date
-    };
+    const formData = new FormData();
+    formData.append('name', editForm.name);
+    formData.append('description', editForm.description);
+    formData.append('repository', editForm.repository);
     
-    // Обновляем библиотеку
-    await store.updateLibrary(library.value.id, updateData);
+    // Добавляем необходимые поля из текущей библиотеки
+    formData.append('language', library.value.language);
+    formData.append('version', library.value.version);
     
-    // Обновляем все версии с новым названием, если оно изменилось
-    if (editForm.name !== library.value.name) {
-      // Здесь можно добавить код для обновления всех версий,
-      // но это потребует дополнительной поддержки на бэкенде
+    // Сохраняем текущую дату публикации
+    formData.append('published_date', library.value.published_date);
+    
+    // Если есть существующий файл
+    if (library.value.file) {
+      formData.append('file_url', library.value.file);
     }
     
-    router.push({
-      path: '/libraries',
-      query: {
-        message: 'Библиотека успешно обновлена',
-        type: 'success'
-      }
-    });
+    // Если есть URL для скачивания
+    if (library.value.download_url) {
+      formData.append('download_url', library.value.download_url);
+    }
+    
+    // Обновляем библиотеку
+    await store.updateLibraryWithFormData(library.value.id, formData);
+    
+    // Показываем уведомление об успехе
+    error.value = {
+      type: 'success',
+      message: 'Библиотека успешно обновлена'
+    };
+    
+    // Перезагружаем данные библиотеки
+    await fetchLibrary();
   } catch (err) {
-    error.value = 'Не удалось обновить библиотеку. ' + (err.response?.data?.detail || '');
     console.error('Ошибка при обновлении библиотеки:', err);
+    error.value = { 
+      type: 'error',
+      message: 'Не удалось обновить библиотеку: ' + (err.response?.data?.detail || err.message || '')
+    };
   } finally {
     updating.value = false;
   }
@@ -404,11 +398,13 @@ const addNewVersion = async () => {
     formData.append('name', library.value.name);
     formData.append('version', newVersionForm.version);
     formData.append('description', library.value.description || '');
-    formData.append('author', library.value.author || '');
+    // Используем существующий язык Python
     formData.append('language', library.value.language);
-    formData.append('homepage', library.value.homepage || '');
     formData.append('repository', library.value.repository || '');
-    formData.append('published_date', newVersionForm.published_date);
+    
+    // Используем текущую дату как дату публикации
+    const today = new Date().toISOString().split('T')[0];
+    formData.append('published_date', today);
     
     if (newVersionForm.file) {
       formData.append('file', newVersionForm.file);
@@ -430,8 +426,8 @@ const addNewVersion = async () => {
     // Показываем уведомление
     error.value = { type: 'success', message: 'Новая версия успешно добавлена' };
   } catch (err) {
-    error.value = 'Не удалось добавить новую версию. ' + (err.response?.data?.detail || '');
     console.error('Ошибка при добавлении новой версии:', err);
+    error.value = { type: 'error', message: 'Не удалось добавить новую версию: ' + (err.response?.data?.detail || err.message || '') };
   } finally {
     adding.value = false;
   }
@@ -465,7 +461,10 @@ const confirmDelete = async () => {
 // Удаление версии
 const confirmDeleteVersion = async (version) => {
   if (versions.value.length <= 1) {
-    alert('Нельзя удалить единственную версию библиотеки. Удалите всю библиотеку.');
+    error.value = {
+      type: 'error',
+      message: 'Нельзя удалить единственную версию библиотеки. Удалите всю библиотеку.'
+    };
     return;
   }
   
@@ -477,10 +476,16 @@ const confirmDeleteVersion = async (version) => {
       await fetchVersions(library.value.name);
       
       // Показываем уведомление
-      error.value = { type: 'success', message: `Версия ${version.version} успешно удалена` };
+      error.value = { 
+        type: 'success', 
+        message: `Версия ${version.version} успешно удалена` 
+      };
     } catch (err) {
-      error.value = 'Не удалось удалить версию библиотеки.';
       console.error('Ошибка при удалении версии:', err);
+      error.value = { 
+        type: 'error', 
+        message: 'Не удалось удалить версию библиотеки: ' + (err.response?.data?.detail || err.message || '')
+      };
     }
   }
 };
@@ -488,7 +493,6 @@ const confirmDeleteVersion = async (version) => {
 // Сброс формы новой версии
 const resetNewVersionForm = () => {
   newVersionForm.version = '';
-  newVersionForm.published_date = new Date().toISOString().slice(0, 10);
   newVersionForm.file = null;
   newVersionForm.download_url = '';
 };
@@ -516,6 +520,18 @@ const formatFileSize = (bytes) => {
   }
   
   return `${size.toFixed(1)} ${units[unitIndex]}`;
+};
+
+// Функция для переключения на форму добавления новой версии
+const goToAddVersionForm = () => {
+  activeTab.value = 'versions';
+  // Прокрутка к форме добавления версии
+  setTimeout(() => {
+    const addVersionForm = document.querySelector('.add-version-form');
+    if (addVersionForm) {
+      addVersionForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, 100);
 };
 
 // Загрузка данных при монтировании компонента
@@ -592,9 +608,7 @@ onMounted(() => {
   font-size: 1.1rem;
   margin-top: 1.5rem;
   margin-bottom: 1rem;
-  color: #333;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5rem;
+  color: #444;
 }
 
 .form-group {
@@ -619,7 +633,7 @@ label {
 }
 
 .required {
-  color: var(--danger-color);
+  color: #dc3545;
 }
 
 input[type="text"],
@@ -635,9 +649,7 @@ select {
   font-family: inherit;
 }
 
-input[type="text"]:focus,
-input[type="url"]:focus,
-input[type="date"]:focus,
+input:focus,
 textarea:focus,
 select:focus {
   outline: none;
@@ -647,92 +659,52 @@ select:focus {
 
 .form-help {
   display: block;
-  font-size: 0.85rem;
-  color: #777;
-  margin-top: 0.35rem;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #666;
 }
 
+/* Styles for the file upload */
 .file-upload {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .file-label {
   display: inline-block;
   padding: 0.5rem 1rem;
   background-color: #f1f5ff;
-  border: 1px solid #e1e7ff;
   color: var(--primary-color);
-  border-radius: 6px;
+  border-radius: 4px;
+  border: 1px solid #d8e0fa;
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-weight: normal;
+  transition: all 0.2s;
 }
 
 .file-label:hover {
-  background-color: #e9efff;
+  background-color: #e6ecff;
 }
 
 .file-input {
   position: absolute;
-  width: 0.1px;
-  height: 0.1px;
+  left: -9999px;
   opacity: 0;
-  overflow: hidden;
-  z-index: -1;
 }
 
 .file-info {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 0.5rem;
-  color: #666;
-}
-
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.85rem;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.loading-container,
-.error-container {
-  padding: 2rem;
-  text-align: center;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.error-message {
-  color: var(--danger-color);
-  margin-bottom: 1rem;
-}
-
-/* Стили для управления версиями */
-.versions-list {
-  margin-bottom: 2rem;
-}
-
-.loading-message,
-.empty-message {
-  text-align: center;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  color: #666;
-}
-
-.version-items {
-  display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Styles for version list */
+.version-items {
+  margin-top: 1rem;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .version-item {
@@ -740,15 +712,17 @@ select:focus {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border-left: 3px solid var(--primary-color);
+  border-bottom: 1px solid #eee;
+}
+
+.version-item:last-child {
+  border-bottom: none;
 }
 
 .version-info {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .version-number {
@@ -759,7 +733,7 @@ select:focus {
 .version-date,
 .version-size {
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 .version-actions {
@@ -767,9 +741,134 @@ select:focus {
   gap: 0.5rem;
 }
 
-.add-version-form {
-  border-top: 1px solid var(--border-color);
-  padding-top: 1.5rem;
+/* Button styles */
+.btn-action {
+  padding: 0.625rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-action.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #3854c8;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: #e0a800;
+}
+
+.btn-action:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Status containers */
+.loading-container,
+.error-container,
+.empty-message,
+.loading-message {
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.error-container {
+  border-left: 4px solid var(--danger-color);
+  background-color: #fff1f1;
+}
+
+.error-message {
+  color: var(--danger-color);
+  margin-bottom: 1rem;
+}
+
+.empty-message,
+.loading-message {
+  color: #666;
+  font-style: italic;
+}
+
+/* Notification */
+.notification {
+  position: relative;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.notification.success {
+  background-color: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.notification.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.close-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.close-btn:hover {
+  opacity: 1;
 }
 
 @media (max-width: 768px) {
@@ -778,21 +877,80 @@ select:focus {
     gap: 1.25rem;
   }
   
-  .form-actions {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
   .version-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
   }
   
-  .version-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
+  .version-actions {
+    margin-top: 0.75rem;
+    width: 100%;
   }
+  
+  .btn-action {
+    flex: 1;
+  }
+}
+
+.current-version-info {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.version-badge {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 50px;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.version-hint {
+  margin-top: 0.5rem;
+  color: #666;
+}
+
+.version-hint a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.version-hint a:hover {
+  text-decoration: underline;
+}
+
+.version-info-panel {
+  background-color: #e6f7ff;
+  border-left: 4px solid #1890ff;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+}
+
+.version-info-panel p {
+  margin: 0.5rem 0;
+}
+
+.version-info-panel p:last-child {
+  margin-bottom: 0;
+}
+
+.version-info-panel strong {
+  color: #0366d6;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #5a6268;
 }
 </style> 

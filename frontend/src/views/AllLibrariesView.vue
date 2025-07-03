@@ -17,20 +17,10 @@
             <input 
               type="text" 
               id="filter-query" 
-              placeholder="Введите название, версию или автора..." 
+              placeholder="Введите название, версию или описание..." 
               v-model="filterQuery"
               @input="applyFilters"
             />
-          </div>
-          
-          <div class="filter-group">
-            <label for="filter-language">Язык:</label>
-            <select id="filter-language" v-model="filterLanguage" @change="applyFilters">
-              <option value="">Все языки</option>
-              <option v-for="lang in languages" :key="lang.id" :value="lang.slug">
-                {{ lang.name }}
-              </option>
-            </select>
           </div>
           
           <div class="filter-group">
@@ -91,24 +81,17 @@ const loading = ref(false);
 const error = ref(null);
 const libraries = ref([]);
 const filterQuery = ref('');
-const filterLanguage = ref('');
 const sortBy = ref('-published_date');
-const languages = computed(() => store.languages);
 
 // Группировка библиотек по имени для выбора версий
 const libraryGroups = computed(() => {
   // Сначала фильтруем библиотеки
   const filtered = libraries.value.filter(lib => {
     // Фильтр по поисковой строке
-    const searchMatch = !filterQuery.value || 
+    return !filterQuery.value || 
       lib.name.toLowerCase().includes(filterQuery.value.toLowerCase()) || 
       lib.version.toLowerCase().includes(filterQuery.value.toLowerCase()) ||
-      (lib.author && lib.author.toLowerCase().includes(filterQuery.value.toLowerCase()));
-    
-    // Фильтр по языку
-    const languageMatch = !filterLanguage.value || lib.language_slug === filterLanguage.value;
-    
-    return searchMatch && languageMatch;
+      (lib.description && lib.description.toLowerCase().includes(filterQuery.value.toLowerCase()));
   });
   
   // Группируем по имени библиотеки
@@ -177,11 +160,6 @@ const fetchLibraries = async () => {
   error.value = null;
   
   try {
-    // Загрузка языков, если они еще не загружены
-    if (store.languages.length === 0) {
-      await store.fetchLanguages();
-    }
-    
     // Загрузка всех библиотек
     const response = await store.fetchAllLibraries();
     libraries.value = response;

@@ -40,39 +40,6 @@
       </div>
       
       <div class="form-group">
-        <label for="language">Язык программирования*</label>
-        <select 
-          id="language" 
-          v-model="form.language" 
-          required
-        >
-          <option v-for="lang in languages" :key="lang.id" :value="lang.id">
-            {{ lang.name }}
-          </option>
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label for="author">Автор</label>
-        <input 
-          id="author" 
-          v-model="form.author" 
-          type="text" 
-          placeholder="Имя автора или организации"
-        />
-      </div>
-      
-      <div class="form-group">
-        <label for="homepage">Домашняя страница</label>
-        <input 
-          id="homepage" 
-          v-model="form.homepage" 
-          type="url" 
-          placeholder="https://example.com"
-        />
-      </div>
-      
-      <div class="form-group">
         <label for="repository">Репозиторий</label>
         <input 
           id="repository" 
@@ -137,15 +104,6 @@
         </div>
       </div>
       
-      <div class="form-group">
-        <label for="published_date">Дата публикации</label>
-        <input 
-          id="published_date" 
-          v-model="form.published_date" 
-          type="date"
-        />
-      </div>
-      
       <div class="form-actions">
         <button 
           type="submit" 
@@ -168,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useLibrariesStore } from '@/stores/libraries';
 
 const store = useLibrariesStore();
@@ -180,11 +138,8 @@ const form = reactive({
   version: '',
   description: '',
   language: null,
-  author: '',
-  homepage: '',
   repository: '',
-  download_url: '',
-  published_date: new Date().toISOString().split('T')[0] // Текущая дата в формате YYYY-MM-DD
+  download_url: ''
 });
 
 const loading = ref(false);
@@ -193,18 +148,29 @@ const uploadMethod = ref('file');
 const selectedFile = ref(null);
 const fileInput = ref(null);
 
-// Получаем список языков из хранилища
-const languages = computed(() => store.languages);
-
 // Загружаем языки при монтировании компонента
 onMounted(async () => {
-  if (!languages.value.length) {
-    await store.fetchLanguages();
-  }
-  
-  // Если есть языки, выбираем первый по умолчанию
-  if (languages.value.length > 0) {
-    form.language = languages.value[0].id;
+  try {
+    // Загружаем список языков и находим Python
+    if (store.languages.length === 0) {
+      await store.fetchLanguages();
+    }
+    
+    // Находим Python среди языков и устанавливаем его ID
+    const pythonLanguage = store.languages.find(lang => 
+      lang.name.toLowerCase() === 'python' || 
+      lang.slug.toLowerCase() === 'python'
+    );
+    
+    if (pythonLanguage) {
+      form.language = pythonLanguage.id;
+    } else {
+      console.error('Язык Python не найден в списке языков');
+      error.value = 'Не удалось найти язык Python. Пожалуйста, обратитесь к администратору.';
+    }
+  } catch (err) {
+    console.error('Ошибка при загрузке языков:', err);
+    error.value = 'Произошла ошибка при загрузке списка языков';
   }
 });
 
