@@ -64,16 +64,27 @@ export const useLibrariesStore = defineStore('libraries', {
     },
     
     async fetchAllLibraries() {
-      this.loading = true
+      this.loading = true;
       try {
-        const response = await api.getAllLibraries()
-        return response.data.results || response.data
+        console.log('Начинаем загрузку всех библиотек...');
+        const response = await api.getAllLibraries();
+        console.log('Получен ответ от сервера:', response);
+        const data = response.data.results || response.data;
+        console.log('Обработанные данные:', data);
+        return data;
       } catch (error) {
-        this.error = error.message || 'Failed to fetch all libraries'
-        console.error(error)
-        throw error
+        this.error = error.message || 'Failed to fetch all libraries';
+        console.error('Ошибка при загрузке библиотек:', error);
+        if (error.response) {
+          // Сервер ответил с кодом ошибки
+          console.error('Ошибка от сервера:', error.response.status, error.response.data);
+        } else if (error.request) {
+          // Запрос был отправлен, но ответа не получено
+          console.error('Нет ответа от сервера:', error.request);
+        }
+        throw error;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     

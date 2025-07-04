@@ -5,7 +5,7 @@ namespace LibraryManager.Models
     public class Config
     {
         [JsonProperty("api_url")]
-        public string ApiUrl { get; set; } = "http://localhost:8000/api";
+        public string ApiUrl { get; set; } = "http://109.194.11.15:8000/api";
 
         [JsonProperty("local_repository_path")]
         public string LocalRepositoryPath { get; set; } = Path.Combine(

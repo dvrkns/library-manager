@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8000/api',
-  timeout: 10000,
+  baseURL: 'http://109.194.11.15:8000/api',
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -44,8 +44,8 @@ export default {
   createLibraryWithFormData(formData) {
     // Создаем новый экземпляр axios с правильными заголовками для FormData
     const formDataClient = axios.create({
-      baseURL: 'http://localhost:8000/api',
-      timeout: 10000,
+      baseURL: 'http://109.194.11.15:8000/api',
+      timeout: 30000,
       headers: {
         'Content-Type': 'multipart/form-data',
         'Accept': 'application/json'
@@ -62,8 +62,8 @@ export default {
   updateLibraryWithFormData(id, formData) {
     // Создаем новый экземпляр axios с правильными заголовками для FormData
     const formDataClient = axios.create({
-      baseURL: 'http://localhost:8000/api',
-      timeout: 10000,
+      baseURL: 'http://109.194.11.15:8000/api',
+      timeout: 30000,
       headers: {
         'Content-Type': 'multipart/form-data',
         'Accept': 'application/json'

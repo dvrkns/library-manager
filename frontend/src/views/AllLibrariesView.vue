@@ -162,8 +162,9 @@ const fetchLibraries = async () => {
     // Загрузка всех библиотек
     const response = await store.fetchAllLibraries();
     libraries.value = response;
+    console.log('Библиотеки успешно загружены:', libraries.value);
   } catch (err) {
-    error.value = 'Не удалось загрузить библиотеки. Пожалуйста, попробуйте позже.';
+    error.value = `Не удалось загрузить библиотеки: ${err.message || err}. Пожалуйста, попробуйте позже.`;
     console.error('Ошибка при загрузке библиотек:', err);
   } finally {
     loading.value = false;
